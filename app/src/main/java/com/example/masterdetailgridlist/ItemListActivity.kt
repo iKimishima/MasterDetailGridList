@@ -2,6 +2,7 @@ package com.example.masterdetailgridlist
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.DisplayMetrics
 import androidx.core.widget.NestedScrollView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
@@ -12,6 +13,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.recyclerview.widget.GridLayoutManager
 
 import com.example.masterdetailgridlist.dummy.DummyContent
 
@@ -41,7 +43,7 @@ class ItemListActivity : AppCompatActivity() {
 
         findViewById<FloatingActionButton>(R.id.fab).setOnClickListener { view ->
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show()
+                .setAction("Action", null).show()
         }
 
         if (findViewById<NestedScrollView>(R.id.item_detail_container) != null) {
@@ -57,12 +59,30 @@ class ItemListActivity : AppCompatActivity() {
 
     private fun setupRecyclerView(recyclerView: RecyclerView) {
         recyclerView.adapter = SimpleItemRecyclerViewAdapter(this, DummyContent.ITEMS, twoPane)
+        val spanCount = getSpanCount()
+        recyclerView.layoutManager =
+            GridLayoutManager(this, spanCount, RecyclerView.VERTICAL, false)
     }
 
-    class SimpleItemRecyclerViewAdapter(private val parentActivity: ItemListActivity,
-                                        private val values: List<DummyContent.DummyItem>,
-                                        private val twoPane: Boolean) :
-            RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder>() {
+    private fun getSpanCount(): Int {
+        val dMetrics = DisplayMetrics()
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            val display = this.display;
+            display?.getRealMetrics(dMetrics)
+        } else {
+            @Suppress("DEPRECATION")
+            window.windowManager.defaultDisplay.getRealMetrics(dMetrics)
+        }
+        var realWidth = dMetrics.widthPixels / dMetrics.density
+        return if (realWidth >= 600 && realWidth < 900) 1 else 2
+    }
+
+    class SimpleItemRecyclerViewAdapter(
+        private val parentActivity: ItemListActivity,
+        private val values: List<DummyContent.DummyItem>,
+        private val twoPane: Boolean
+    ) :
+        RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder>() {
 
         private val onClickListener: View.OnClickListener
 
@@ -76,9 +96,9 @@ class ItemListActivity : AppCompatActivity() {
                         }
                     }
                     parentActivity.supportFragmentManager
-                            .beginTransaction()
-                            .replace(R.id.item_detail_container, fragment)
-                            .commit()
+                        .beginTransaction()
+                        .replace(R.id.item_detail_container, fragment)
+                        .commit()
                 } else {
                     val intent = Intent(v.context, ItemDetailActivity::class.java).apply {
                         putExtra(ItemDetailFragment.ARG_ITEM_ID, item.id)
@@ -90,7 +110,7 @@ class ItemListActivity : AppCompatActivity() {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             val view = LayoutInflater.from(parent.context)
-                    .inflate(R.layout.item_list_content, parent, false)
+                .inflate(R.layout.item_list_content, parent, false)
             return ViewHolder(view)
         }
 
